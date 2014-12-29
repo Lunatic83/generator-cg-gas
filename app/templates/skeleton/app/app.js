@@ -1,4 +1,4 @@
-angular.module('<%= _.camelize(appname) %>', ['ui.bootstrap','ui.utils','<%= routerModuleName %>','ngAnimate','templates']);
+angular.module('<%= _.camelize(appname) %>', ['ui.bootstrap','ui.utils','<%= routerModuleName %>','ngAnimate']);
 <% if (!uirouter) { %>
 angular.module('<%= _.camelize(appname) %>').config(function($routeProvider) {
 
@@ -18,7 +18,10 @@ angular.module('<%= _.camelize(appname) %>').config(function($stateProvider, $ur
 
 });
 <% } %>
-angular.module('<%= _.camelize(appname) %>').run(function($rootScope) {
+angular.module('<%= _.camelize(appname) %>').run(function($rootScope<% if(uirouter) { print(',$state,$stateParams'); } else { print(''); } %>) {
+
+   <% if(uirouter) { print('$rootScope.$state=$state;\n$rootScope.$stateParams=$stateParams;'); } else { print(''); } %>
+
 
     $rootScope.safeApply = function(fn) {
         var phase = $rootScope.$$phase;

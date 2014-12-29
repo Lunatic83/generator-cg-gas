@@ -20,9 +20,11 @@ module.exports = {
     baseDir + '/vendor/angular-bootstrap/ui-bootstrap-tpls.js',
     baseDir + '/vendor/moment/moment.js',
     baseDir + '/vendor/**/*min.js',
+    baseDir + '/app.js',
     baseDir + '/modules/**/*.js',
+    baseDir + '/service/**/*.js',
+    baseDir + '/partial/**/*.js',
     'build/tmp/*.js',
-    baseDir + '/modules/**/*-spec.js'
   ],
 
   //used framework

@@ -1,6 +1,7 @@
 //'use strict';
 // generated on <%= (new Date).toISOString().split('T')[0] %> using <%= pkg.name %> <%= pkg.version %>
 
+var appConfig = require('./package.json');
 var config = require('./build/build.config.js');
 var karmaConfig = require('./build/karma.config.js');
 var protractorConfig = require('./build/protractor.config.js');
@@ -55,17 +56,20 @@ gulp.task('images', function() {
 //generate angular templates using html2js
 gulp.task('templates', function() {
   return gulp.src(config.tpl)
-    .pipe($.changed(config.tmp))
-    .pipe($.html2js({
-      outputModuleName: 'templates',
-      base: 'app',
-      useStrict: true
-    }))
-    .pipe($.concat('templates.js'))
-    .pipe(gulp.dest(config.tmp))
-    .pipe($.size({
-      title: 'templates'
-    }));
+  .pipe($.changed(config.tmpDist))
+  .pipe($.html2js({
+    outputModuleName: 'templates',
+    base: 'app',
+    useStrict: true
+  }))
+  .pipe($.concat('templates.js'))
+  .pipe($.uglify({
+    mangle: false,
+  }))
+  .pipe(gulp.dest(config.tmpDist))
+  .pipe($.size({
+    title: 'templates'
+  }));
 });
 
 //generate css files from scss sources
@@ -75,7 +79,7 @@ gulp.task('sass', function() {
     .on('error', function(err) {
       console.log(err.message);
     })
-    .pipe(gulp.dest(config.tmp))
+    .pipe(gulp.dest(config.sassDist))
     .pipe($.size({
       title: 'sass'
     }));
@@ -107,31 +111,33 @@ gulp.task('build', ['clean'], function(cb) {
 gulp.task('html', function() {
   var assets = $.useref.assets(
   { searchPath: '{build,app}'});
-// 'build/tmp/templates.js'
+  // 'build/tmp/templates.js'
   return gulp.src(config.index)
-    .pipe(assets)
-    .pipe($.sourcemaps.init())
-    .pipe($.if('**/*app.js', $.ngAnnotate()))
-    .pipe($.if('**/*.js', $.uglify({
-      mangle: false,
-    })))
-    .pipe($.if('*.css', $.csso()))
-    .pipe($.if(['**/*app.js', '**/*app.css'], $.header(config.banner, {
-      pkg: pkg
-    })))
-    .pipe($.rev())
-    .pipe(assets.restore())
-    .pipe($.useref())
-    .pipe($.revReplace())
-    .pipe($.if('*.html', $.minifyHtml({
-      empty: true
-    })))
-    //.pipe($.debug({verbose: true}))
-    .pipe($.sourcemaps.write())
-    .pipe(gulp.dest(config.dist))
-    .pipe($.size({
-      title: 'html'
-    }));
+  .pipe($.replace('<!-- template-holder -->','<script src="scripts/templates.js"></script>'))
+  .pipe(assets)
+  .pipe($.sourcemaps.init())
+  .pipe($.if('**/*app.js',$.replace(new RegExp(appConfig.name+'\\u0027\\s*,\\s*\\u005b','i'),appConfig.name+'\', ["templates",')))
+  .pipe($.if('**/*.js', $.ngAnnotate()))
+  .pipe($.if('**/*.js', $.uglify({
+    mangle: false,
+  })))
+  .pipe($.if('*.css', $.csso()))
+  .pipe($.if(['**/*app.js', '**/*app.css'], $.header(config.banner, {
+    pkg: pkg
+  })))
+  .pipe($.rev())
+  .pipe(assets.restore())
+  .pipe($.useref())
+  .pipe($.revReplace())
+  .pipe($.if('*.html', $.minifyHtml({
+    empty: true
+  })))
+  //.pipe($.debug({verbose: true}))
+  .pipe($.sourcemaps.write())
+  .pipe(gulp.dest(config.dist))
+  .pipe($.size({
+    title: 'html'
+  }));
 });
 
 //copy assets in dist folder
@@ -161,7 +167,7 @@ gulp.task('copy', function() {
 
 //copy html templates in dist folder
 gulp.task('copy:templates', function() {
-  return gulp.src([      
+  return gulp.src([
       config.base + '/modules/**/*.html',
     ]).pipe(gulp.dest(config.dist+'/modules'))
     .pipe($.size({
@@ -171,7 +177,7 @@ gulp.task('copy:templates', function() {
 
 
 //clean temporary directories
-gulp.task('clean', del.bind(null, [config.dist, config.tmp]));
+gulp.task('clean', del.bind(null, [config.dist, config.tmpDist,config.sassDist]));
 
 //lint files
 gulp.task('jshint', function() {
@@ -195,7 +201,7 @@ gulp.task('default', ['serve']); //
 gulp.task('test:unit', ['build'], function(cb) {
   karma.start(_.assign({}, karmaConfig, {
     singleRun: true
-  }), cb);
+  }), cb());
 });
 
 // Run e2e tests using protractor, make sure serve task is running.
@@ -233,14 +239,14 @@ gulp.task('serve', ['build'], function() {
   gulp.watch(config.html, reload);
   gulp.watch(config.scss, ['sass', reload]);
   gulp.watch(config.js, ['jshint']);
-  gulp.watch(config.tpl, ['templates', reload]);
+  gulp.watch(config.js, reload);
   gulp.watch(config.assets, reload);
 });
 
 //run the app packed in the dist folder
-gulp.task('serve:dist', ['build:dist'], function() {
+gulp.task('serve:dist', [], function() {
   browserSync({
-    notify: false,    
+    notify: false,
     server: {
       baseDir:  [config.dist],
       middleware: [

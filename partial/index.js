@@ -35,7 +35,7 @@ PartialGenerator.prototype.askFor = function askFor() {
             cgUtils.askForModuleAndDir('partial',this,true,cb);
         }.bind(this));
     }else{
-        if(this.options.partialoptions.route!==undefined) 
+        if(this.options.partialoptions.route!==undefined)
             this.route = this.options.partialoptions.route;
 
         cgUtils.askForModuleAndDir('partial',this,true,cb);
@@ -49,8 +49,10 @@ PartialGenerator.prototype.files = function files() {
     cgUtils.processTemplates(this.name,this.dir,'partial',this,null,null,this.module);
 
     if (this.route && this.route.length > 0){
-        var partialUrl = this.dir + "/"+ this.name + '.html';
-        partialUrl=partialUrl.replace("app/","");
+        var partialUrl = this.dir + this.name + '.html';
+        //fixed for both slashes windows or unix style directory divider
+        partialUrl=partialUrl.substr(4);
+        
         cgUtils.injectRoute(this.module.file,this.config.get('uirouter'),this.name,this.route,partialUrl,this);
     }
 

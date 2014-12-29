@@ -39,7 +39,6 @@ exports.processTemplates = function(name,dir,type,that,defaultDir,configName,mod
     if (!configName) {
         configName = type + 'Templates';
     }
-
     var templateDirectory = path.join(path.dirname(that.resolved),defaultDir);
     if(that.config.get(configName)){
         templateDirectory = path.join(process.cwd(),that.config.get(configName));
@@ -136,7 +135,7 @@ exports.askForModule = function(type,that,cb){
         cb.bind(that)(mainModule);
         return;
     }
-    
+
     var choices = _.pluck(modules,'name');
     choices.unshift(mainModule.name + ' (Primary Application Module)');
 
@@ -192,7 +191,14 @@ exports.askForDir = function(type,that,module,ownDir,cb){
     if (!configedDir){
         configedDir = '.';
     }
-    var defaultDir = path.join(that.dir+'/modules/',configedDir,'/');
+		//removing the modules dir in module folder
+    var defaultDir;
+		if(module.primary){
+		   defaultDir = path.join(that.dir+'/modules/',configedDir,'/');
+		}else {
+			 defaultDir = path.join(that.dir+'/',configedDir,'/');
+		}
+
     defaultDir = path.relative(process.cwd(),defaultDir);
 
     if (ownDir) {
@@ -258,7 +264,7 @@ exports.askForDir = function(type,that,module,ownDir,cb){
 
     };
 
-    if(that.options.defaultDir===undefined) 
+    if(that.options.defaultDir===undefined)
         that.prompt(dirPrompt,dirPromptCallback);
     else {
         that.dir = that.options.defaultDir;
